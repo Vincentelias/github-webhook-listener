@@ -7,7 +7,8 @@ This is a simple GitHub Webhook Listener built with Node.js that listens for web
 - [How it works](#how-it-works)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Configuration](#configuration)
+- [Github webhook configuration](#github-webhook-configuration)
+- [Nginx configuration](#nginx-configuration)
 - [Creating a shell script in your repo for on push events](#creating-a-shell-script-in-your-repo-for-on-push-events)
 
 ## How it works
@@ -53,7 +54,7 @@ When a `push` event happens, the listener will execute a script called on-push-t
     ```bash
     pm2 status
     ```
-## Configuration
+## Github webhook configuration
 Go to your GitHub repository.
 Navigate to
 Settings
@@ -71,6 +72,26 @@ Set it to trigger for
 push
 events and input the same secret you defined in your
 .env
+
+## Nginx configuration
+
+Add a server block to your nginx configuration to expose the webhook
+
+```nginx
+server {
+    listen 80;
+    server_name your-server-ip;
+
+    location /webhook {
+        proxy_pass http://your-server-ip:4000/webhook;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
 
 ## Creating a shell script in your repo for on push events
 
@@ -95,26 +116,6 @@ Create a shell script on-push-to-repo.sh in your project which contains all the 
 Make the script executable
 ```bash
     chmod +x /path/to/your/project/on-push-to-repo.sh
-```
-
-## Nginx configuration
-
-Add a server block to your nginx configuration to expose the webhook
-
-```nginx
-server {
-    listen 80;
-    server_name your-server-ip;
-
-    location /webhook {
-        proxy_pass http://your-server-ip:4000/webhook;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
 ```
 
 Now, each time you push to the main branch, the script in your repo should be executed. 
