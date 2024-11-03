@@ -35,12 +35,12 @@ app.post('/webhook', (req, res) => {
     exec(scriptToExecute, (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
-            return res.status(500).send('Execution error');
         }
         console.log(`stdout: ${stdout}`);
         console.error(`stderr: ${stderr}`);
-        res.status(200).send('Webhook received and script executed');
+
     });
+    res.status(200).send('Webhook received');
 });
 
 // Start the server
