@@ -63,15 +63,14 @@ Webhooks
 ->
 Add webhook.
 
-Enter your server's IP or domain followed by
+- Enter your server's IP or domain followed by
 /webhook
 , for example:
 http://your-server-ip:4000/webhook
 
-Set it to trigger for
-push
-events and input the same secret you defined in your
-.env
+- Use application/json
+- Set the secret to the one you configured in your .env
+- Don't change any other settings
 
 ## Nginx configuration
 
@@ -93,9 +92,11 @@ server {
 }
 ```
 
+Make sure to restart nginx
+
 ## Creating a shell script in your repo for on push events
 
-Navigate to one of your repos for which you want to configure on push events
+Navigate to one of your projects for which you want to configure on push events
 ```bash
     cd /opt/projects/example-website
 ```
@@ -124,5 +125,5 @@ Now, each time you push to the main branch, the script in your repo should be ex
 
 If the script is not executed, troubleshoot in the following order
 - Execute the command ```pm2 logs github-webhook-listener```
-- If you don't see any logs, it means github was not able to reach your server, there is something wrong with your nginx configuration
+- If you don't see any logs, it means github was not able to reach your server, there is probably something wrong with your nginx configuration
 - If you do see logs, look at the specific error message and troubleshoot from there
