@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 4000;
 app.use(bodyParser.json());
 
 // GitHub Webhook Secret
-const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET; // Set this in your Dockerfile or as an env variable
+const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
 const PROJECTS_FOLDER = process.env.PROJECTS_FOLDER
 
 // Function to verify GitHub webhook signature
