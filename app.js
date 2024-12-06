@@ -82,7 +82,9 @@ app.post('/webhook', (req, res) => {
         process.stdout.write(`[${getParisTimePrefix()}] stdout: ${stdout}`);
         if (stderr) {
             console.error(`[${getParisTimePrefix()}] stderr: ${stderr}`);
-            await sendTelegramMessage(`⚠️ Deployment warning for ${repoName}\n\nWarning: ${stderr}\n\nTime: ${getParisTimePrefix()}`);
+            if (stderr.toLowerCase().includes('error') || stderr.toLowerCase().includes('fatal') || stderr.toLowerCase().includes('warning')) {
+                await sendTelegramMessage(`⚠️ Deployment warning for ${repoName}\n\nWarning: ${stderr}\n\nTime: ${getParisTimePrefix()}`);
+            }
         }
     });
     res.status(200).send('Webhook received');
