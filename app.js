@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const { exec } = require('child_process');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -14,6 +15,10 @@ app.use(bodyParser.json());
 // GitHub Webhook Secret
 const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
 const PROJECTS_FOLDER = process.env.PROJECTS_FOLDER
+
+// Add these environment variables
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 // Add this helper function at the top level
 const getParisTimePrefix = () => {
@@ -33,6 +38,21 @@ const verifySignature = (req) => {
     return signature === hash;
 };
 
+// Add this helper function
+const sendTelegramMessage = async (message) => {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+
+    try {
+        await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            chat_id: TELEGRAM_CHAT_ID,
+            text: message,
+            parse_mode: 'HTML'
+        });
+    } catch (error) {
+        console.error(`[${getParisTimePrefix()}] Failed to send Telegram notification:`, error.message);
+    }
+};
+
 // Webhook endpoint
 app.post('/webhook', (req, res) => {
     process.stdout.write(`[${getParisTimePrefix()}] Received call from Github\n`);
@@ -47,12 +67,18 @@ app.post('/webhook', (req, res) => {
     const scriptToExecute = `${PROJECTS_FOLDER}/${repoName}/on-push-to-repo.sh`;
 
     process.stdout.write(`[${getParisTimePrefix()}] Executing script in project folder\n`);
-    exec(scriptToExecute, (error, stdout, stderr) => {
+    exec(scriptToExecute, async (error, stdout, stderr) => {
         if (error) {
             console.error(`[${getParisTimePrefix()}] exec error: ${error}`);
+            await sendTelegramMessage(`❌ Error deploying ${repoName}\n\nError: ${error.message}\n\nTime: ${getParisTimePrefix()}`);
+        } else {
+            await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n\nTime: ${getParisTimePrefix()}`);
         }
         process.stdout.write(`[${getParisTimePrefix()}] stdout: ${stdout}`);
-        console.error(`[${getParisTimePrefix()}] stderr: ${stderr}`);
+        if (stderr) {
+            console.error(`[${getParisTimePrefix()}] stderr: ${stderr}`);
+            await sendTelegramMessage(`⚠️ Deployment warning for ${repoName}\n\nWarning: ${stderr}\n\nTime: ${getParisTimePrefix()}`);
+        }
     });
     res.status(200).send('Webhook received');
 });
