@@ -57,7 +57,9 @@ const sendTelegramMessage = async (message) => {
 app.post('/webhook', (req, res) => {
     process.stdout.write(`[${getParisTimePrefix()}] Received call from Github\n`);
     if (!verifySignature(req)) {
+        const errorMsg = `🚫 Unauthorized webhook call - Unable to verify signature\n\nTime: ${getParisTimePrefix()}`;
         process.stdout.write(`[${getParisTimePrefix()}] Unable to verify signature, make sure your github webhook secret is set correctly\n`);
+        sendTelegramMessage(errorMsg);
         return res.status(401).send('Unauthorized');
     }
 
@@ -65,6 +67,9 @@ app.post('/webhook', (req, res) => {
 
     const repoName = req.body.repository.name;
     const scriptToExecute = `${PROJECTS_FOLDER}/${repoName}/on-push-to-repo.sh`;
+
+    // Add notification when starting deployment
+    sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n\nTime: ${getParisTimePrefix()}`);
 
     process.stdout.write(`[${getParisTimePrefix()}] Executing script in project folder\n`);
     exec(scriptToExecute, async (error, stdout, stderr) => {
