@@ -66,11 +66,11 @@ const sendTelegramErrorMessage = async (repoName, error, stdout) => {
 
     // Split the error message into lines and get the last 40 lines
     const errorLines = cleanError.split('\n');
-    const lastLinesOfError = errorLines.slice(-40).join('\n');
+    const lastLinesOfError = errorLines.slice(-20).join('\n');
 
     // Split the stdout into lines and get the last 20 lines
     const stdoutLines = cleanStdout.split('\n');
-    const lastLinesOfStdout = stdoutLines.slice(-20).join('\n');
+    const lastLinesOfStdout = stdoutLines.slice(-30).join('\n');
 
     // Construct the error message
     const errorMessage = `❌ Error deploying ${repoName}\n\nError: ${lastLinesOfError}\n\nLast 20 lines of stdout:\n${lastLinesOfStdout}\n\n${getParisTimePrefix()}`;
