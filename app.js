@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const { exec } = require('child_process');
 const axios = require('axios');
+const { summarizeErrorLog } = require('./openAiService');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -53,29 +54,31 @@ const sendTelegramMessage = async (message) => {
     }
 };
 
-// Function to remove ANSI escape codes
-const stripAnsiCodes = (str) => {
-    return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+const constructTelegramMessage = (prefix, repoName, summary) => {
+    const timePrefix = getParisTimePrefix();
+    let message = `${prefix} ${repoName}\n\n${timePrefix}`;
+    if (summary) {
+        message = `${prefix} ${repoName}\n\nAi Summary: ${summary}\n\n${timePrefix}`;
+    }
+    return message;
 };
 
-// Modify the sendTelegramErrorMessage function
-const sendTelegramErrorMessage = async (repoName, error, stdout) => {
-    // Strip ANSI codes from error and stdout
-    const cleanError = stripAnsiCodes(error.toString());
-    const cleanStdout = stripAnsiCodes(stdout.toString());
+const summarizeAndSendMessage = async (prefix, repoName, log) => {
+    const lastCharsOfLog = log.slice(-20000);
+    let summarizedMessage = '';
 
-    // Split the error message into lines and get the last 40 lines
-    const errorLines = cleanError.split('\n');
-    const lastLinesOfError = errorLines.slice(-20).join('\n');
+    try {
+        summarizedMessage = await summarizeErrorLog(lastCharsOfLog);
+    } catch (error) {
+        console.error('Failed to summarize log:', error);
+    }
 
-    // Split the stdout into lines and get the last 20 lines
-    const stdoutLines = cleanStdout.split('\n');
-    const lastLinesOfStdout = stdoutLines.slice(-30).join('\n');
+    const message = constructTelegramMessage(prefix, repoName, summarizedMessage);
+    await sendTelegramMessage(message);
+};
 
-    // Construct the error message
-    const errorMessage = `❌ Error deploying ${repoName}\n\nError: ${lastLinesOfError}\n\nLast 20 lines of stdout:\n${lastLinesOfStdout}\n\n${getParisTimePrefix()}`;
-
-    await sendTelegramMessage(errorMessage);
+const sendTelegramErrorMessage = async (repoName, error) => {
+    await summarizeAndSendMessage('❌ Error deploying', repoName, error.toString());
 };
 
 // Webhook endpoint
@@ -101,7 +104,7 @@ app.post('/webhook', (req, res) => {
         if (error) {
             // Write the error to the std error
             process.stderr.write(`${getParisTimePrefix()} exec error: ${error}\n`);
-            await sendTelegramErrorMessage(repoName, error, stdout);
+            await sendTelegramErrorMessage(repoName, error);
         } else {
             await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n\n${getParisTimePrefix()}`);
         }
@@ -112,12 +115,10 @@ app.post('/webhook', (req, res) => {
 
         // Handle stderr
         if (stderr) {
-            const stderrLines = stderr.split('\n');
-            const lastLinesOfStderr = stderrLines.slice(-20).join('\n');
+            process.stderr.write(`${getParisTimePrefix()} stderr: ${stderr.slice(-10000)}\n`);
 
-            console.error(`${getParisTimePrefix()} stderr: ${lastLinesOfStderr}`);
-            if (stderr.toLowerCase().includes('error') || stderr.toLowerCase().includes('fatal') || stderr.toLowerCase().includes('warning')) {
-                await sendTelegramMessage(`⚠️ Script execution warning for ${repoName}\n\nDetails: ${lastLinesOfStderr}\n\n${getParisTimePrefix()}`);
+            if (['error', 'fatal', 'warning'].some(term => stderr.toLowerCase().includes(term))) {
+                await summarizeAndSendMessage('⚠️ Script execution warning for', repoName, stderr);
             }
         }
     });
