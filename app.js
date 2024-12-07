@@ -53,6 +53,23 @@ const sendTelegramMessage = async (message) => {
     }
 };
 
+const sendTelegramErrorMessage = async (repoName, error, stdout) => {
+    // Split the error message into lines and get the last 20 lines
+    const errorLines = error.toString().split('\n');
+    const lastLinesOfError = errorLines.slice(-20).join('\n');
+
+    // Get the last 20 lines of stdout
+    const stdoutLines = stdout.split('\n');
+    const lastLinesOfStdout = stdoutLines.slice(-20).join('\n');
+
+    // Construct the error message
+    const errorMessage = `❌ Error deploying ${repoName}\n\nError: ${lastLinesOfError}\n\nLast 20 lines of stdout:\n${lastLinesOfStdout}\n\nTime: ${getParisTimePrefix()}`;
+
+    // Log and send the error message
+    console.error(`[${getParisTimePrefix()}] exec error: ${errorMessage}`);
+    await sendTelegramMessage(errorMessage);
+};
+
 // Webhook endpoint
 app.post('/webhook', (req, res) => {
     process.stdout.write(`[${getParisTimePrefix()}] Received call from Github\n`);
@@ -74,21 +91,19 @@ app.post('/webhook', (req, res) => {
     process.stdout.write(`[${getParisTimePrefix()}] Executing script in project folder\n`);
     exec(scriptToExecute, async (error, stdout, stderr) => {
         if (error) {
-            console.error(`[${getParisTimePrefix()}] exec error: ${error}`);
-
-            // Get the last 500 lines of stdout
-            const stdoutLines = stdout.split('\n');
-            const lastLinesOfLog = stdoutLines.slice(-500).join('\n');
-
-            await sendTelegramMessage(`❌ Error deploying ${repoName}\n\nError: ${error}\n\nLast 500 lines of stdout:\n${lastLinesOfLog}\n\nTime: ${getParisTimePrefix()}`);
+            await sendTelegramErrorMessage(repoName, error, stdout);
         } else {
-            await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n\${getParisTimePrefix()}`);
+            await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n${getParisTimePrefix()}`);
         }
-        process.stdout.write(`[${getParisTimePrefix()}] stdout: ${stdout}`);
+
+        // Handle stderr
         if (stderr) {
-            console.error(`[${getParisTimePrefix()}] stderr: ${stderr}`);
+            const stderrLines = stderr.split('\n');
+            const lastLinesOfStderr = stderrLines.slice(-20).join('\n');
+
+            console.error(`[${getParisTimePrefix()}] stderr: ${lastLinesOfStderr}`);
             if (stderr.toLowerCase().includes('error') || stderr.toLowerCase().includes('fatal') || stderr.toLowerCase().includes('warning')) {
-                await sendTelegramMessage(`⚠️ Script execution warning for ${repoName}\n\nDetails: ${stderr}\n\n${getParisTimePrefix()}`);
+                await sendTelegramMessage(`⚠️ Script execution warning for ${repoName}\n\nDetails: ${lastLinesOfStderr}\n\n${getParisTimePrefix()}`);
             }
         }
     });
