@@ -22,16 +22,16 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 // Add this helper function at the top level
 const getParisTimePrefix = () => {
-    return new Date().toLocaleString('en-GB', {
+    return `📅 ${new Date().toLocaleString('en-GB', {
         timeZone: 'Europe/Paris',
         day: '2-digit',
         month: 'short',
         hour: '2-digit',
         minute: '2-digit'
-    }).replace(',', '').toLowerCase();
+    }).replace(',', '').toLowerCase()}`;
 };
 
-// Function to verify GitHub webhook signature
+// ` Function to verify GitHub webhook signature
 const verifySignature = (req) => {
     const signature = req.headers['x-hub-signature'];
     const hash = `sha1=${crypto.createHmac('sha1', GITHUB_WEBHOOK_SECRET).update(JSON.stringify(req.body)).digest('hex')}`;
