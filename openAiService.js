@@ -1,11 +1,8 @@
-const { Configuration, OpenAIApi } = require('openai');
+import OpenAI from 'openai';
+
 require('dotenv').config();
 
 // Initialize OpenAI API client
-const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
 
 /**
  * Summarizes a large string using OpenAI's GPT model.
@@ -14,7 +11,12 @@ const openai = new OpenAIApi(configuration);
  */
 async function summarizeErrorLog(errorLog) {
     try {
-        const response = await openai.createCompletion({
+
+        const client = new OpenAI({
+            apiKey: process.env['OPENAI_API_KEY'], // This is the default and can be omitted
+        });
+
+        const response = await client.chat.completions.create({
             model: 'gpt-4o', // Use a suitable model
             prompt: `Summarize the following error log and give me the root cause of the error and how to solve it. Format in plain text, it's for a telegram message. Use emojis to clarify:\n\n${errorLog}`,
         });
