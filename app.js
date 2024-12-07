@@ -86,7 +86,7 @@ app.post('/webhook', (req, res) => {
     const scriptToExecute = `${PROJECTS_FOLDER}/${repoName}/on-push-to-repo.sh`;
 
     // Add notification when starting deployment
-    sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n\n${getParisTimePrefix()}`);
+    sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n${getParisTimePrefix()}`);
 
     process.stdout.write(`[${getParisTimePrefix()}] Executing script in project folder\n`);
     exec(scriptToExecute, async (error, stdout, stderr) => {
