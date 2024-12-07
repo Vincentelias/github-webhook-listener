@@ -53,16 +53,19 @@ const sendTelegramMessage = async (message) => {
     }
 };
 
-const sendTelegramErrorMessage = async (repoName, error) => {
+
+const sendTelegramErrorMessage = async (repoName, error, stdout) => {
     // Split the error message into lines and get the last 20 lines
     const errorLines = error.toString().split('\n');
     const lastLinesOfError = errorLines.slice(-40).join('\n');
 
-    // Construct the error message
-    const errorMessage = `❌ Error deploying ${repoName}\n\nError: ${lastLinesOfError}\n\n${getParisTimePrefix()}`;
+    // Split the stdout into lines and get the last 20 lines
+    const stdoutLines = stdout.toString().split('\n');
+    const lastLinesOfStdout = stdoutLines.slice(-20).join('\n');
 
-    // Log and send the error message
-    console.error(`${getParisTimePrefix()} exec error: ${errorMessage}`);
+    // Construct the error message
+    const errorMessage = `❌ Error deploying ${repoName}\n\nError: ${lastLinesOfError}\n\nLast 20 lines of stdout:\n${lastLinesOfStdout}\n\n${getParisTimePrefix()}`;
+
     await sendTelegramMessage(errorMessage);
 };
 
@@ -70,7 +73,7 @@ const sendTelegramErrorMessage = async (repoName, error) => {
 app.post('/webhook', (req, res) => {
     process.stdout.write(`${getParisTimePrefix()} Received call from Github\n`);
     if (!verifySignature(req)) {
-        const errorMsg = `🚫 Unauthorized webhook call - Unable to verify signature\n\nTime: ${getParisTimePrefix()}`;
+        const errorMsg = `🚫 Unauthorized webhook call - Unable to verify signature\n\n${getParisTimePrefix()}`;
         process.stdout.write(`${getParisTimePrefix()} Unable to verify signature, make sure your github webhook secret is set correctly\n`);
         sendTelegramMessage(errorMsg);
         return res.status(401).send('Unauthorized');
@@ -82,15 +85,21 @@ app.post('/webhook', (req, res) => {
     const scriptToExecute = `${PROJECTS_FOLDER}/${repoName}/on-push-to-repo.sh`;
 
     // Add notification when starting deployment
-    sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n${getParisTimePrefix()}`);
-
+    sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n\n${getParisTimePrefix()}`);
     process.stdout.write(`${getParisTimePrefix()} Executing script in project folder\n`);
+
     exec(scriptToExecute, async (error, stdout, stderr) => {
         if (error) {
-            await sendTelegramErrorMessage(repoName, error);
+            // Write the error to the std error
+            process.stderr.write(`${getParisTimePrefix()} exec error: ${error}\n`);
+            await sendTelegramErrorMessage(repoName, error, stdout);
         } else {
-            await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n${getParisTimePrefix()}`);
+            await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n\n${getParisTimePrefix()}`);
         }
+
+
+        // Write the stdout to the std output
+        process.stdout.write(`${getParisTimePrefix()} exec stdout: ${stdout}\n`);
 
         // Handle stderr
         if (stderr) {
