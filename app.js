@@ -69,21 +69,26 @@ app.post('/webhook', (req, res) => {
     const scriptToExecute = `${PROJECTS_FOLDER}/${repoName}/on-push-to-repo.sh`;
 
     // Add notification when starting deployment
-    sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n\nTime: ${getParisTimePrefix()}`);
+    sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n\n${getParisTimePrefix()}`);
 
     process.stdout.write(`[${getParisTimePrefix()}] Executing script in project folder\n`);
     exec(scriptToExecute, async (error, stdout, stderr) => {
         if (error) {
             console.error(`[${getParisTimePrefix()}] exec error: ${error}`);
-            await sendTelegramMessage(`❌ Error deploying ${repoName}\n\nError: ${error.message}\n\nTime: ${getParisTimePrefix()}`);
+
+            // Get the last 500 lines of stdout
+            const stdoutLines = stdout.split('\n');
+            const lastLinesOfLog = stdoutLines.slice(-500).join('\n');
+
+            await sendTelegramMessage(`❌ Error deploying ${repoName}\n\nError: ${error}\n\nLast 500 lines of stdout:\n${lastLinesOfLog}\n\nTime: ${getParisTimePrefix()}`);
         } else {
-            await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n\nTime: ${getParisTimePrefix()}`);
+            await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n\${getParisTimePrefix()}`);
         }
         process.stdout.write(`[${getParisTimePrefix()}] stdout: ${stdout}`);
         if (stderr) {
             console.error(`[${getParisTimePrefix()}] stderr: ${stderr}`);
             if (stderr.toLowerCase().includes('error') || stderr.toLowerCase().includes('fatal') || stderr.toLowerCase().includes('warning')) {
-                await sendTelegramMessage(`⚠️ Deployment warning for ${repoName}\n\nWarning: ${stderr}\n\nTime: ${getParisTimePrefix()}`);
+                await sendTelegramMessage(`⚠️ Deployment warning for ${repoName}\n\nWarning: ${stderr}\n\n${getParisTimePrefix()}`);
             }
         }
     });
