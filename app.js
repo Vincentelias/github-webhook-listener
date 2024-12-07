@@ -53,14 +53,23 @@ const sendTelegramMessage = async (message) => {
     }
 };
 
+// Function to remove ANSI escape codes
+const stripAnsiCodes = (str) => {
+    return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+};
 
+// Modify the sendTelegramErrorMessage function
 const sendTelegramErrorMessage = async (repoName, error, stdout) => {
-    // Split the error message into lines and get the last 20 lines
-    const errorLines = error.toString().split('\n');
+    // Strip ANSI codes from error and stdout
+    const cleanError = stripAnsiCodes(error.toString());
+    const cleanStdout = stripAnsiCodes(stdout.toString());
+
+    // Split the error message into lines and get the last 40 lines
+    const errorLines = cleanError.split('\n');
     const lastLinesOfError = errorLines.slice(-40).join('\n');
 
     // Split the stdout into lines and get the last 20 lines
-    const stdoutLines = stdout.toString().split('\n');
+    const stdoutLines = cleanStdout.split('\n');
     const lastLinesOfStdout = stdoutLines.slice(-20).join('\n');
 
     // Construct the error message
