@@ -16,7 +16,7 @@ async function summarizeErrorLog(errorLog) {
             apiKey: process.env['OPENAI_API_KEY'], // This is the default and can be omitted
         });
 
-        const response = await client.chat.completions.create({
+        const completion = await client.chat.completions.create({
             model: 'gpt-4o', // Use a suitable model
             messages: [
                 {
@@ -27,7 +27,7 @@ async function summarizeErrorLog(errorLog) {
             ]
         });
 
-        return response.data.choices[0].text.trim();
+        return completion.choices[0].message.trim();
     } catch (error) {
         console.error('Error summarizing the log:', error);
         throw new Error('Failed to summarize the error log');
