@@ -104,7 +104,7 @@ app.post('/webhook', (req, res) => {
         if (error) {
             // Write the error to the std error
             process.stderr.write(`${getParisTimePrefix()} exec error: ${error}\n`);
-            await sendTelegramErrorMessage(repoName, error);
+            await sendTelegramErrorMessage(repoName, stdout);
         } else {
             await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n\n${getParisTimePrefix()}`);
         }
