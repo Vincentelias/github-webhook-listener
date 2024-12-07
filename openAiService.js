@@ -25,7 +25,7 @@ async function summarizeErrorLog(errorLog) {
                     role: 'system',
                     content: 'You are a helpful assistant that summarizes error logs.'
                 },
-                { role: 'user', content: `Summarize the following error log and give me the root cause of the error of why the build process failed. Investigate and try to find the root cause. If there are multiple errors, give me the root cause of EACH error, don't skip any. Don't give me info about the on-push-to-repo.sh script, only the error log of the project. Format in plain text, it's for a telegram message. Use emojis to clarify:\n\n${errorLog}. Do not use markdown unless telegram accepts it.` }
+                { role: 'user', content: `Summarize the following error log and give me the root cause of the error (the most specific one which is most likely the root cause of why the build is failing). Investigate and try to find the root cause. If there are multiple errors, give me the root cause of EACH error, don't skip any. Don't give me info about the on-push-to-repo.sh script, only the error log of the project. Format in plain text, it's for a telegram message. Don't use emojis. This is the error log:\n${errorLog}. Do not use markdown unless telegram accepts it.` }
             ]
         });
 
