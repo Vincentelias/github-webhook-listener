@@ -18,7 +18,13 @@ async function summarizeErrorLog(errorLog) {
 
         const response = await client.chat.completions.create({
             model: 'gpt-4o', // Use a suitable model
-            prompt: `Summarize the following error log and give me the root cause of the error and how to solve it. Format in plain text, it's for a telegram message. Use emojis to clarify:\n\n${errorLog}`,
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a helpful assistant that summarizes error logs.'
+                },
+                { role: 'user', content: `Summarize the following error log and give me the root cause of the error and how to solve it. Format in plain text, it's for a telegram message. Use emojis to clarify:\n\n${errorLog}` }
+            ]
         });
 
         return response.data.choices[0].text.trim();
