@@ -58,7 +58,7 @@ const constructTelegramMessage = (prefix, repoName, summary) => {
     const timePrefix = getParisTimePrefix();
     let message = `${prefix} ${repoName}\n\n${timePrefix}`;
     if (summary) {
-        message = `${prefix} ${repoName}\n\nAi Summary: ${summary}\n\n${timePrefix}`;
+        message = `${prefix} ${repoName}\n\n🧠 Ai Summary:\n${summary}\n\n${timePrefix}`;
     }
     return message;
 };
