@@ -49,38 +49,34 @@ const sendTelegramMessage = async (message) => {
             parse_mode: 'HTML'
         });
     } catch (error) {
-        console.error(`[${getParisTimePrefix()}] Failed to send Telegram notification:`, error.message);
+        console.error(`${getParisTimePrefix()} Failed to send Telegram notification:`, error.message);
     }
 };
 
-const sendTelegramErrorMessage = async (repoName, error, stdout) => {
+const sendTelegramErrorMessage = async (repoName, error) => {
     // Split the error message into lines and get the last 20 lines
     const errorLines = error.toString().split('\n');
-    const lastLinesOfError = errorLines.slice(-20).join('\n');
-
-    // Get the last 20 lines of stdout
-    const stdoutLines = stdout.split('\n');
-    const lastLinesOfStdout = stdoutLines.slice(-20).join('\n');
+    const lastLinesOfError = errorLines.slice(-40).join('\n');
 
     // Construct the error message
-    const errorMessage = `❌ Error deploying ${repoName}\n\nError: ${lastLinesOfError}\n\nLast 20 lines of stdout:\n${lastLinesOfStdout}\n\nTime: ${getParisTimePrefix()}`;
+    const errorMessage = `❌ Error deploying ${repoName}\n\nError: ${lastLinesOfError}\n\n${getParisTimePrefix()}`;
 
     // Log and send the error message
-    console.error(`[${getParisTimePrefix()}] exec error: ${errorMessage}`);
+    console.error(`${getParisTimePrefix()} exec error: ${errorMessage}`);
     await sendTelegramMessage(errorMessage);
 };
 
 // Webhook endpoint
 app.post('/webhook', (req, res) => {
-    process.stdout.write(`[${getParisTimePrefix()}] Received call from Github\n`);
+    process.stdout.write(`${getParisTimePrefix()} Received call from Github\n`);
     if (!verifySignature(req)) {
         const errorMsg = `🚫 Unauthorized webhook call - Unable to verify signature\n\nTime: ${getParisTimePrefix()}`;
-        process.stdout.write(`[${getParisTimePrefix()}] Unable to verify signature, make sure your github webhook secret is set correctly\n`);
+        process.stdout.write(`${getParisTimePrefix()} Unable to verify signature, make sure your github webhook secret is set correctly\n`);
         sendTelegramMessage(errorMsg);
         return res.status(401).send('Unauthorized');
     }
 
-    process.stdout.write(`[${getParisTimePrefix()}] Successfully verified signature\n`);
+    process.stdout.write(`${getParisTimePrefix()} Successfully verified signature\n`);
 
     const repoName = req.body.repository.name;
     const scriptToExecute = `${PROJECTS_FOLDER}/${repoName}/on-push-to-repo.sh`;
@@ -88,10 +84,10 @@ app.post('/webhook', (req, res) => {
     // Add notification when starting deployment
     sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n${getParisTimePrefix()}`);
 
-    process.stdout.write(`[${getParisTimePrefix()}] Executing script in project folder\n`);
+    process.stdout.write(`${getParisTimePrefix()} Executing script in project folder\n`);
     exec(scriptToExecute, async (error, stdout, stderr) => {
         if (error) {
-            await sendTelegramErrorMessage(repoName, error, stdout);
+            await sendTelegramErrorMessage(repoName, error);
         } else {
             await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n${getParisTimePrefix()}`);
         }
@@ -101,7 +97,7 @@ app.post('/webhook', (req, res) => {
             const stderrLines = stderr.split('\n');
             const lastLinesOfStderr = stderrLines.slice(-20).join('\n');
 
-            console.error(`[${getParisTimePrefix()}] stderr: ${lastLinesOfStderr}`);
+            console.error(`${getParisTimePrefix()} stderr: ${lastLinesOfStderr}`);
             if (stderr.toLowerCase().includes('error') || stderr.toLowerCase().includes('fatal') || stderr.toLowerCase().includes('warning')) {
                 await sendTelegramMessage(`⚠️ Script execution warning for ${repoName}\n\nDetails: ${lastLinesOfStderr}\n\n${getParisTimePrefix()}`);
             }
@@ -112,5 +108,5 @@ app.post('/webhook', (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-    process.stdout.write(`[${getParisTimePrefix()}] Server is running on port ${PORT}\n`);
+    process.stdout.write(`${getParisTimePrefix()} Server is running on port ${PORT}\n`);
 });
