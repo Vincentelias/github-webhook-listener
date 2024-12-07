@@ -27,7 +27,8 @@ async function summarizeErrorLog(errorLog) {
             ]
         });
 
-        return completion.choices[0].message.trim();
+        process.stdout.write(`${getParisTimePrefix()} Summarized log: ${JSON.stringify(completion.choices[0].message)}`);
+        return completion.choices[0].message;
     } catch (error) {
         console.error('Error summarizing the log:', error);
         throw new Error('Failed to summarize the error log');
