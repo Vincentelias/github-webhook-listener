@@ -21,7 +21,6 @@ const PROJECTS_FOLDER = process.env.PROJECTS_FOLDER
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// Add this helper function at the top level
 const getParisTimePrefix = () => {
     return `📅 ${new Date().toLocaleString('en-GB', {
         timeZone: 'Europe/Paris',
@@ -39,7 +38,6 @@ const verifySignature = (req) => {
     return signature === hash;
 };
 
-// Add this helper function
 const sendTelegramMessage = async (message) => {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
 
@@ -47,7 +45,7 @@ const sendTelegramMessage = async (message) => {
         await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             chat_id: TELEGRAM_CHAT_ID,
             text: message,
-            parse_mode: 'HTML'
+            parse_mode: 'Markdown'
         });
     } catch (error) {
         console.error(`Message to be sent: BEGIN MESSAGE TO BE SENT\n\n${message}\n\nEND MESSAGE TO BE SENT`)
