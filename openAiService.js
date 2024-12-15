@@ -32,7 +32,7 @@ async function summarizeErrorLog(errorLog) {
                         Investigate and try to find the root cause. 
                         If there are multiple errors (which are actually causing the build to fail), give me the root cause of EACH error, don't skip any. 
                         Don't give me info about the on-push-to-repo.sh script, only the error log of the project.
-                        Send the message in Markdown, it's for a telegram message. Don't use emojis. 
+                        Send the message in PLAIN TEXT FORMAT, NO MARKDOWN, it's for a telegram message. Don't use emojis. 
                         If you see docker run scripts, ignore them. 
                         Ignore all things related to the docker scripts, these are not the root cause.
                         Do everything in a concise way, as short as possible without giving me extra data or information which I don't need.
