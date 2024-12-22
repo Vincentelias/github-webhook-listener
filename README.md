@@ -9,10 +9,6 @@ A simple Node.js server that listens for Github webhook calls and executes a scr
 - Sends deployment notifications via Telegram (success, errors, starts)
 - Easy to configure and use
 
-## How it works
-
-When Github...
-
 ## Table of Contents
 
 - [How it works](#how-it-works)
