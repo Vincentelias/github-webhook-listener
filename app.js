@@ -115,8 +115,8 @@ app.post('/webhook', (req, res) => {
         if (stderr) {
             process.stderr.write(`${getParisTimePrefix()} stderr: ${stderr.slice(-10000)}\n`);
 
-            if (stderr && stderr.length > 20) {
-                await summarizeAndSendMessage('⚠️ Script executed but with errors', repoName, stderr);
+            if (['err', 'error', 'fatal', 'warning'].some(term => stderr.toLowerCase().includes(term))) {
+                await summarizeAndSendMessage('⚠️ Script executed with errors or warnings', repoName, stderr);
             }
         }
     });
