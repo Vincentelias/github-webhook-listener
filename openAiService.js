@@ -37,6 +37,7 @@ async function summarizeErrorLog(errorLog) {
                         Ignore all things related to the docker scripts, these are not the root cause.
                         Do everything in a concise way, as short as possible without giving me extra data or information which I don't need.
                         I am an experienced programmer, so if you can just explain to me the issue that's enough.
+                        Only if there are absolutely no errors, only then you may summarize the warnings instead of the errors.
                         Try to find it based on the log This is the error log:
                         ${errorLog}`
                 }
