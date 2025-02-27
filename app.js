@@ -89,6 +89,15 @@ app.post('/webhook', (req, res) => {
         return res.status(401).send('Unauthorized');
     }
 
+    console.log(req.body)
+
+    //Only execute the script for the main branch
+    const branch = req.body.ref;
+    if (branch !== 'refs/heads/main') {
+        process.stdout.write(`${getParisTimePrefix()} Ignoring push to non-main branch: ${branch}\n`);
+        return res.status(200).send('Ignored non-main branch push');
+    }
+
     process.stdout.write(`${getParisTimePrefix()} Successfully verified signature\n`);
 
     const repoName = req.body.repository.name;
