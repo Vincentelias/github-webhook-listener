@@ -3,7 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 const axios = require('axios');
 const { summarizeErrorLog } = require('./openAiService');
 
@@ -107,26 +107,35 @@ app.post('/webhook', (req, res) => {
     sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n\n${getParisTimePrefix()}`);
     process.stdout.write(`${getParisTimePrefix()} Executing script in project folder\n`);
 
-    exec(scriptToExecute, async (error, stdout, stderr) => {
-        if (error) {
-            // Write the error to the std error
-            process.stderr.write(`${getParisTimePrefix()} exec error: ${error}\n`);
-            await sendTelegramErrorMessage(repoName, error.toString() + stdout.toString());
+    const child = spawn('bash', [scriptToExecute], { 
+        stdio: 'pipe',
+        env: { ...process.env, PYTHONUNBUFFERED: '1', FORCE_COLOR: '0' }
+    });
+    let allOutput = '';
+    let allError = '';
+
+    child.stdout.on('data', (data) => {
+        const output = data.toString();
+        allOutput += output;
+        process.stdout.write(`${getParisTimePrefix()} ${output}`);
+    });
+
+    child.stderr.on('data', (data) => {
+        const error = data.toString();
+        allError += error;
+        process.stderr.write(`${getParisTimePrefix()} ${error}`);
+    });
+
+    child.on('close', async (code) => {
+        if (code !== 0) {
+            process.stderr.write(`${getParisTimePrefix()} Script exited with code ${code}\n`);
+            await sendTelegramErrorMessage(repoName, `Script exited with code ${code}\n${allError}\n${allOutput}`);
         } else {
             await sendTelegramMessage(`✅ Successfully deployed ${repoName}\n\n${getParisTimePrefix()}`);
         }
 
-
-        // Write the stdout to the std output
-        process.stdout.write(`${getParisTimePrefix()} exec stdout: ${stdout}\n`);
-
-        // Handle stderr
-        if (stderr) {
-            process.stderr.write(`${getParisTimePrefix()} stderr: ${stderr.slice(-10000)}\n`);
-
-            if (['error', 'fatal', 'warning'].some(term => stderr.toLowerCase().includes(term))) {
-                await summarizeAndSendMessage('⚠️ Script executed with errors or warnings', repoName, stderr);
-            }
+        if (allError && ['error', 'fatal', 'warning'].some(term => allError.toLowerCase().includes(term))) {
+            await summarizeAndSendMessage('⚠️ Script executed with errors or warnings', repoName, allError);
         }
     });
     res.status(200).send('Webhook received');
