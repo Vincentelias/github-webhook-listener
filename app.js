@@ -89,7 +89,6 @@ app.post('/webhook', (req, res) => {
         return res.status(401).send('Unauthorized');
     }
 
-    console.log(req.body)
 
     //Only execute the script for the main branch
     const branch = req.body.ref;
@@ -107,7 +106,7 @@ app.post('/webhook', (req, res) => {
     sendTelegramMessage(`🚀 Starting deployment for ${repoName}\n\n${getParisTimePrefix()}`);
     process.stdout.write(`${getParisTimePrefix()} Executing script in project folder\n`);
 
-    const child = spawn('bash', [scriptToExecute], { 
+    const child = spawn('bash', [scriptToExecute], {
         stdio: 'pipe',
         env: { ...process.env, PYTHONUNBUFFERED: '1', FORCE_COLOR: '0' }
     });
