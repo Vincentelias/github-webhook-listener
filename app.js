@@ -48,7 +48,7 @@ const sendTelegramMessage = async (message) => {
         });
     } catch (error) {
         console.error(`Message to be sent: BEGIN MESSAGE TO BE SENT\n\n${message}\n\nEND MESSAGE TO BE SENT`)
-        console.error(`${getParisTimePrefix()} Failed to send Telegram notification:`, error.message);
+        console.error(`${getParisTimePrefix()} Failed to send Telegram notification:`, error.message + " status code: " + error.response?.status);
     }
 };
 
