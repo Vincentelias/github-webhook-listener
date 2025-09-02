@@ -5,10 +5,16 @@ const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const { exec } = require('child_process');
 const axios = require('axios');
+const https = require('https');
 const { summarizeErrorLog } = require('./openAiService');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+// Create HTTPS agent that forces IPv4
+const httpsAgent = new https.Agent({
+    family: 4  // Force IPv4
+});
 
 // Middleware to parse JSON
 app.use(bodyParser.json());
@@ -45,6 +51,8 @@ const sendTelegramMessage = async (message) => {
         await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             chat_id: TELEGRAM_CHAT_ID,
             text: message
+        }, {
+            httpsAgent: httpsAgent
         });
     } catch (error) {
         console.error(`Message to be sent: BEGIN MESSAGE TO BE SENT\n\n${message}\n\nEND MESSAGE TO BE SENT`)
